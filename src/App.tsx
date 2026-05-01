@@ -601,10 +601,13 @@ export function App() {
                   min="0"
                   max="100"
                   value={editingPresetDraft.settings.volume}
-                  onInput={(event) => updateEditingPresetDraft((current) => ({
-                    ...current,
-                    settings: { ...current.settings, volume: Number(event.currentTarget.value) }
-                  }))}
+                  onChange={(event) => {
+                    event.stopPropagation();
+                    updateEditingPresetDraft((current) => ({
+                      ...current,
+                      settings: { ...current.settings, volume: Number(event.currentTarget.value) }
+                    }));
+                  }}
                 />
                 <input
                   className="preset-volume-input"
