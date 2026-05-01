@@ -1476,7 +1476,7 @@ export const presets: Preset[] = [
     },
     noiseType: 'brown',
     beatBand: 'beta',
-    baseFrequency: 440
+    baseFrequency: 417
   },
   {
     key: 'creative',

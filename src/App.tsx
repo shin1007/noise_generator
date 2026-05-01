@@ -7,7 +7,7 @@ import type { AudioMode, Locale, NoiseType, Preset } from './types';
 const STORAGE_KEY = 'noise_generator_settings';
 const PRESET_STORAGE_KEY = 'noise_generator_saved_presets';
 
-const solfeggioFrequencies = [174, 285, 396, 417, 440, 528, 639, 741, 852, 963]; // Added 440 for Preset 1
+const solfeggioFrequencies = [174, 285, 396, 417, 528, 639, 741, 852, 963];
 
 function findNearestSolfeggio(freq: number): number {
   return solfeggioFrequencies.reduce((prev, curr) => Math.abs(curr - freq) < Math.abs(prev - freq) ? curr : prev);
