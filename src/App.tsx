@@ -593,7 +593,11 @@ export function App() {
       </section>
 
       {editingPresetKey && editingPresetDraft && (
-        <div className="modal-overlay" onClick={closePresetEditor}>
+        <div className="modal-overlay" onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            closePresetEditor();
+          }
+        }}>
           <div className="modal-content card preset-editor-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <h2>{strings.presetEditorTitle}</h2>
@@ -630,9 +634,10 @@ export function App() {
                   onMouseUp={(event) => event.stopPropagation()}
                   onInput={(event) => {
                     event.stopPropagation();
+                    const nextVolume = Number(event.currentTarget.value);
                     updateEditingPresetDraft((current) => ({
                       ...current,
-                      settings: { ...current.settings, volume: Number(event.currentTarget.value) }
+                      settings: { ...current.settings, volume: nextVolume }
                     }));
                   }}
                   onChange={(event) => event.stopPropagation()}
@@ -643,10 +648,13 @@ export function App() {
                   min="0"
                   max="100"
                   value={editingPresetDraft.settings.volume}
-                  onChange={(event) => updateEditingPresetDraft((current) => ({
-                    ...current,
-                    settings: { ...current.settings, volume: Math.max(0, Math.min(100, Number(event.target.value) || 0)) }
-                  }))}
+                  onChange={(event) => {
+                    const nextVolume = Math.max(0, Math.min(100, Number(event.target.value) || 0));
+                    updateEditingPresetDraft((current) => ({
+                      ...current,
+                      settings: { ...current.settings, volume: nextVolume }
+                    }));
+                  }}
                 />
               </div>
 
@@ -658,7 +666,10 @@ export function App() {
                   <input
                     className="preset-name-input"
                     value={editingPresetDraft.name}
-                    onChange={(event) => updateEditingPresetDraft((current) => ({ ...current, name: event.target.value }))}
+                    onChange={(event) => {
+                      const nextName = event.target.value;
+                      updateEditingPresetDraft((current) => ({ ...current, name: nextName }));
+                    }}
                   />
                 </label>
                 <label>
@@ -669,7 +680,10 @@ export function App() {
                     className="preset-description-input"
                     rows={4}
                     value={editingPresetDraft.description}
-                    onChange={(event) => updateEditingPresetDraft((current) => ({ ...current, description: event.target.value }))}
+                    onChange={(event) => {
+                      const nextDescription = event.target.value;
+                      updateEditingPresetDraft((current) => ({ ...current, description: nextDescription }));
+                    }}
                   />
                 </label>
               </div>
@@ -699,10 +713,13 @@ export function App() {
                     <input
                       type="checkbox"
                       checked={editingPresetDraft.settings.beatEnabled}
-                      onChange={(event) => updateEditingPresetDraft((current) => ({
-                        ...current,
-                        settings: { ...current.settings, beatEnabled: event.target.checked }
-                      }))}
+                      onChange={(event) => {
+                        const isChecked = event.target.checked;
+                        updateEditingPresetDraft((current) => ({
+                          ...current,
+                          settings: { ...current.settings, beatEnabled: isChecked }
+                        }));
+                      }}
                     />
                     <span className="binaural-label">{strings.beatOn}</span>
                   </label>
@@ -788,7 +805,11 @@ export function App() {
       )}
 
       {installGuideOpen && (
-        <div className="install-guide-overlay" onClick={() => setInstallGuideOpen(false)}>
+        <div className="install-guide-overlay" onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            setInstallGuideOpen(false);
+          }
+        }}>
           <div className="install-guide-content card" onClick={(e) => e.stopPropagation()}>
             <div className="guide-header"><h2>{strings.addHome}</h2><button className="close-guide" onClick={() => setInstallGuideOpen(false)}>×</button></div>
             <div className="guide-body">
