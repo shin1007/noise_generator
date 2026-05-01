@@ -553,7 +553,7 @@ export function App() {
                               openPresetEditor(preset);
                             }}
                           >
-                            {locale === 'ja' ? '編集' : 'Edit'}
+                            {strings.edit}
                           </button>
                         </div>
                         <span className="preset-setting-summary">{buildPresetSummary(presetDraft.settings, locale, beatMode)}</span>
@@ -567,7 +567,7 @@ export function App() {
           </div>
           <div className="preset-reset-wrap">
             <button type="button" className="preset-reset-button" onClick={resetQuickPresets}>
-              {locale === 'ja' ? 'クイックプリセットを初期状態にする' : strings.resetPreset}
+              {strings.resetPresetsDescription}
             </button>
           </div>
         </div>
@@ -577,7 +577,7 @@ export function App() {
         <div className="modal-overlay">
           <div className="modal-content card preset-editor-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
-              <h2>{locale === 'ja' ? 'プリセット編集' : 'Preset editor'}</h2>
+              <h2>{strings.presetEditorTitle}</h2>
               <button className="close-modal" onClick={closePresetEditor}>×</button>
             </div>
             <div className="modal-body preset-editor-body">
@@ -622,7 +622,7 @@ export function App() {
               <div className="control-section">
                 <label>
                   <div className="label-row">
-                    <span className="label-text">{locale === 'ja' ? 'プリセット名' : 'Preset name'}</span>
+                    <span className="label-text">{strings.presetNameLabel}</span>
                   </div>
                   <input
                     className="preset-name-input"
@@ -632,7 +632,7 @@ export function App() {
                 </label>
                 <label>
                   <div className="label-row">
-                    <span className="label-text">{locale === 'ja' ? '説明' : 'Description'}</span>
+                    <span className="label-text">{strings.presetDescriptionLabel}</span>
                   </div>
                   <textarea
                     className="preset-description-input"
@@ -739,7 +739,7 @@ export function App() {
               </div>
 
               <div className="preset-card-actions">
-                <button type="button" className="preset-apply-button" onClick={() => saveEditingPreset(true)}>{locale === 'ja' ? '適用して保存' : 'Apply and Save'}</button>
+                <button type="button" className="preset-apply-button" onClick={() => saveEditingPreset(true)}>{strings.applyAndSave}</button>
               </div>
             </div>
           </div>
@@ -778,12 +778,13 @@ function getBinauralBandForDifference(differenceFrequency: number) {
 function formatBinauralBandLabel(settings: UserSettings, locale: Locale): string {
   const band = getBinauralBandForDifference(settings.differenceFrequency);
   const bandName = resolveLocalizedText(band.label, locale);
-  return locale === 'ja' ? `${bandName}波` : `${bandName} wave`;
+  return `${bandName}${copy[locale].waveSuffix}`;
 }
 
 function buildPresetSummary(settings: UserSettings, locale: Locale, currentBeatMode: AudioMode): string {
+  const strings = copy[locale];
   const noiseLabel = settings.noiseType === 'off'
-    ? (locale === 'ja' ? 'ノイズなし' : 'Noise off')
+    ? strings.noNoise
     : getNoiseLabel(locale, settings.noiseType);
   if (!settings.beatEnabled) {
     return `${noiseLabel} · ${formatFrequency(settings.baseFrequency)}`;

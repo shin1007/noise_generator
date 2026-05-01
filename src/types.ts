@@ -99,4 +99,12 @@ export interface Copy {
   settingsTitle: string;
   advancedSettings: string;
   noiseOff: string;
+  edit: string;
+  resetPresetsDescription: string;
+  presetEditorTitle: string;
+  presetNameLabel: string;
+  presetDescriptionLabel: string;
+  applyAndSave: string;
+  noNoise: string;
+  waveSuffix: string;
 }
