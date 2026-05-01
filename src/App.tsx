@@ -479,7 +479,16 @@ export function App() {
                     <button className="step-button" type="button" onClick={() => updateSetting('volume', Math.min(100, volume + 1))}>+</button>
                   </div>
                 </div>
-                <input type="range" min="0" max="100" value={volume} onInput={(e) => updateSetting('volume', Number(e.currentTarget.value))} />
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={volume}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateSetting('volume', Number(e.currentTarget.value));
+                  }}
+                />
               </label>
             </div>
             <div className="control-group">
@@ -495,7 +504,17 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <input type="range" min="5" max="60" step="5" value={timerMinutes} onInput={(e) => updateSetting('timerMinutes', clampTimerValue(Number(e.currentTarget.value)))} />
+                <input
+                  type="range"
+                  min="5"
+                  max="60"
+                  step="5"
+                  value={timerMinutes}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateSetting('timerMinutes', clampTimerValue(Number(e.currentTarget.value)));
+                  }}
+                />
               </label>
             </div>
           </div>
@@ -574,7 +593,7 @@ export function App() {
       </section>
 
       {editingPresetKey && editingPresetDraft && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={closePresetEditor}>
           <div className="modal-content card preset-editor-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <h2>{strings.presetEditorTitle}</h2>
@@ -705,6 +724,7 @@ export function App() {
                           step="1"
                           value={editingPresetDraft.settings.baseFrequency}
                           onChange={(event) => {
+                            event.stopPropagation();
                             const nextBaseFrequency = coerceSolfeggioFrequency(event.currentTarget.value);
                             if (nextBaseFrequency === null) {
                               return;
