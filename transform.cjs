@@ -1,5 +1,5 @@
 const fs = require('fs');
-const path = 'C:\\Users\\shin1\\local repos\\noise_maker\\src\\content.ts';
+const path = 'C:\\Users\\shin1\\local repos\\noise_generator\\src\\content.ts';
 let content = fs.readFileSync(path, 'utf8');
 
 // Standard values for other languages (using English as fallback)
