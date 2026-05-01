@@ -186,6 +186,7 @@ export function App() {
   const [presetDrafts, setPresetDrafts] = useState<SavedPresetStore>(() => loadSavedPresets());
   const [editingPresetKey, setEditingPresetKey] = useState<string | null>(null);
   const [editingPresetDraft, setEditingPresetDraft] = useState<SavedPresetData | null>(null);
+  const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -268,13 +269,26 @@ export function App() {
 
   const openPresetEditor = useCallback((preset: Preset) => {
     setEditingPresetKey(preset.key);
-    setEditingPresetDraft(getPresetDraft(preset));
-  }, [getPresetDraft]);
+    const draft = getPresetDraft(preset);
+    // Use current app volume for the draft
+    draft.settings.volume = settings.volume;
+    setEditingPresetDraft(draft);
+    setInitialSettings(settings); // Store current app settings to revert if cancelled
+  }, [getPresetDraft, settings]);
 
   const closePresetEditor = useCallback(() => {
     setEditingPresetKey(null);
     setEditingPresetDraft(null);
+    setInitialSettings(null);
   }, []);
+
+  const cancelPresetEditor = useCallback(() => {
+    if (initialSettings) {
+      setSettings(initialSettings);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialSettings));
+    }
+    closePresetEditor();
+  }, [closePresetEditor, initialSettings]);
 
   const updateEditingPresetDraft = useCallback((updater: (current: SavedPresetData) => SavedPresetData) => {
     setEditingPresetDraft((current) => {
@@ -601,7 +615,7 @@ export function App() {
           <div className="modal-content card preset-editor-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <h2>{strings.presetEditorTitle}</h2>
-              <button className="close-modal" onClick={closePresetEditor}>×</button>
+              <button className="close-modal" onClick={cancelPresetEditor}>×</button>
             </div>
             <div className="modal-body preset-editor-body">
               <div className="control-section">
@@ -610,18 +624,22 @@ export function App() {
                   <div className="value-with-stepper">
                     <button className="step-button" type="button" onClick={(event) => {
                       event.stopPropagation();
+                      const nextVolume = Math.max(0, editingPresetDraft.settings.volume - 1);
                       updateEditingPresetDraft((current) => ({
                         ...current,
-                        settings: { ...current.settings, volume: Math.max(0, current.settings.volume - 1) }
+                        settings: { ...current.settings, volume: nextVolume }
                       }));
+                      updateSetting('volume', nextVolume);
                     }}>-</button>
                     <span className="value-display">{editingPresetDraft.settings.volume}%</span>
                     <button className="step-button" type="button" onClick={(event) => {
                       event.stopPropagation();
+                      const nextVolume = Math.min(100, editingPresetDraft.settings.volume + 1);
                       updateEditingPresetDraft((current) => ({
                         ...current,
-                        settings: { ...current.settings, volume: Math.min(100, current.settings.volume + 1) }
+                        settings: { ...current.settings, volume: nextVolume }
                       }));
+                      updateSetting('volume', nextVolume);
                     }}>+</button>
                   </div>
                 </div>
@@ -639,22 +657,9 @@ export function App() {
                       ...current,
                       settings: { ...current.settings, volume: nextVolume }
                     }));
+                    updateSetting('volume', nextVolume);
                   }}
                   onChange={(event) => event.stopPropagation()}
-                />
-                <input
-                  className="preset-volume-input"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={editingPresetDraft.settings.volume}
-                  onChange={(event) => {
-                    const nextVolume = Math.max(0, Math.min(100, Number(event.target.value) || 0));
-                    updateEditingPresetDraft((current) => ({
-                      ...current,
-                      settings: { ...current.settings, volume: nextVolume }
-                    }));
-                  }}
                 />
               </div>
 
@@ -678,7 +683,7 @@ export function App() {
                   </div>
                   <textarea
                     className="preset-description-input"
-                    rows={4}
+                    rows={2}
                     value={editingPresetDraft.description}
                     onChange={(event) => {
                       const nextDescription = event.target.value;
@@ -696,10 +701,13 @@ export function App() {
                       key={type.key}
                       type="button"
                       className={`noise-chip noise-${type.key} ${editingPresetDraft.settings.noiseType === type.key ? 'selected' : ''}`}
-                      onClick={() => updateEditingPresetDraft((current) => ({
-                        ...current,
-                        settings: { ...current.settings, noiseType: type.key }
-                      }))}
+                      onClick={() => {
+                        updateEditingPresetDraft((current) => ({
+                          ...current,
+                          settings: { ...current.settings, noiseType: type.key }
+                        }));
+                        updateSetting('noiseType', type.key);
+                      }}
                     >
                       <strong>{resolveLocalizedText(type.label, locale)}</strong>
                     </button>
@@ -708,91 +716,96 @@ export function App() {
               </div>
 
               <div className="control-section">
-                <div className="toggle-row">
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={editingPresetDraft.settings.beatEnabled}
-                      onChange={(event) => {
-                        const isChecked = event.target.checked;
-                        updateEditingPresetDraft((current) => ({
-                          ...current,
-                          settings: { ...current.settings, beatEnabled: isChecked }
-                        }));
-                      }}
-                    />
-                    <span className="binaural-label">{strings.beatOn}</span>
-                  </label>
+                <div className="preset-control-label">{strings.beatLabel}</div>
+                <div className="noise-grid preset-noise-grid preset-beat-grid">
+                  {binauralBands.map((band) => {
+                    const activeBand = binauralBands.find((item) => editingPresetDraft.settings.differenceFrequency >= item.min && (item.key === 'gamma' ? editingPresetDraft.settings.differenceFrequency <= item.max : editingPresetDraft.settings.differenceFrequency < item.max)) ?? binauralBands[1];
+                    const targetFreq = binauralTargetByKey[band.key] ?? editingPresetDraft.settings.differenceFrequency;
+                    const isSelected = editingPresetDraft.settings.beatEnabled && band.key === activeBand.key;
+                    return (
+                      <button
+                        key={band.key}
+                        type="button"
+                        className={`noise-chip ${isSelected ? 'selected' : ''}`}
+                        onClick={() => {
+                          updateEditingPresetDraft((current) => ({
+                            ...current,
+                            settings: { ...current.settings, differenceFrequency: targetFreq, beatEnabled: true }
+                          }));
+                          updateSetting('beatEnabled', true);
+                          updateSetting('differenceFrequency', targetFreq);
+                        }}
+                      >
+                        <strong>{resolveLocalizedText(band.label, locale)}{strings.waveSuffix} ({formatFrequency(targetFreq)})</strong>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className={`noise-chip noise-off ${!editingPresetDraft.settings.beatEnabled ? 'selected' : ''}`}
+                    onClick={() => {
+                      updateEditingPresetDraft((current) => ({
+                        ...current,
+                        settings: { ...current.settings, beatEnabled: false }
+                      }));
+                      updateSetting('beatEnabled', false);
+                    }}
+                  >
+                    <strong>{strings.noiseOff}</strong>
+                  </button>
                 </div>
 
                 {editingPresetDraft.settings.beatEnabled && (
-                  <>
-                    <div className="control-group preset-control-group">
-                      <label>
-                        <div className="label-row">
-                          <span className="label-text">{strings.baseFreq}</span>
-                          <div className="value-with-stepper">
-                            <button className="step-button" type="button" onClick={(event) => {
-                              event.stopPropagation();
-                              updateEditingPresetDraft((current) => ({
-                                ...current,
-                                settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, -1) }
-                              }));
-                            }}>-</button>
-                            <span className="value-display">{editingPresetDraft.settings.baseFrequency}Hz</span>
-                            <button className="step-button" type="button" onClick={(event) => {
-                              event.stopPropagation();
-                              updateEditingPresetDraft((current) => ({
-                                ...current,
-                                settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, 1) }
-                              }));
-                            }}>+</button>
-                          </div>
-                        </div>
-                        <input
-                          type="range"
-                          min="174"
-                          max="963"
-                          step="1"
-                          value={editingPresetDraft.settings.baseFrequency}
-                          onMouseDown={(event) => event.stopPropagation()}
-                          onMouseUp={(event) => event.stopPropagation()}
-                          onInput={(event) => {
+                  <div className="control-group preset-control-group">
+                    <label>
+                      <div className="label-row">
+                        <span className="label-text">{strings.baseFreq}</span>
+                        <div className="value-with-stepper">
+                          <button className="step-button" type="button" onClick={(event) => {
                             event.stopPropagation();
-                            const nextBaseFrequency = coerceSolfeggioFrequency(event.currentTarget.value);
-                            if (nextBaseFrequency === null) {
-                              return;
-                            }
+                            const nextFreq = stepSolfeggioFrequency(editingPresetDraft.settings.baseFrequency, -1);
                             updateEditingPresetDraft((current) => ({
                               ...current,
-                              settings: { ...current.settings, baseFrequency: nextBaseFrequency }
+                              settings: { ...current.settings, baseFrequency: nextFreq }
                             }));
-                          }}
-                          onChange={(event) => event.stopPropagation()}
-                        />
-                      </label>
-                    </div>
-
-                    <ul className="binaural-band-list compact-grid preset-band-list">
-                      {binauralBands.map((band) => {
-                        const activeBand = binauralBands.find((item) => editingPresetDraft.settings.differenceFrequency >= item.min && (item.key === 'gamma' ? editingPresetDraft.settings.differenceFrequency <= item.max : editingPresetDraft.settings.differenceFrequency < item.max)) ?? binauralBands[1];
-                        return (
-                          <li key={band.key}>
-                            <button
-                              type="button"
-                              className={`band-button ${band.key === activeBand.key ? 'active' : ''}`}
-                              onClick={() => updateEditingPresetDraft((current) => ({
-                                ...current,
-                                settings: { ...current.settings, differenceFrequency: binauralTargetByKey[band.key] ?? current.settings.differenceFrequency }
-                              }))}
-                            >
-                              {resolveLocalizedText(band.label, locale)} ({formatFrequency(binauralTargetByKey[band.key] ?? 0)})
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </>
+                            updateSetting('baseFrequency', nextFreq);
+                          }}>-</button>
+                          <span className="value-display">{editingPresetDraft.settings.baseFrequency}Hz</span>
+                          <button className="step-button" type="button" onClick={(event) => {
+                            event.stopPropagation();
+                            const nextFreq = stepSolfeggioFrequency(editingPresetDraft.settings.baseFrequency, 1);
+                            updateEditingPresetDraft((current) => ({
+                              ...current,
+                              settings: { ...current.settings, baseFrequency: nextFreq }
+                            }));
+                            updateSetting('baseFrequency', nextFreq);
+                          }}>+</button>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="174"
+                        max="963"
+                        step="1"
+                        value={editingPresetDraft.settings.baseFrequency}
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onMouseUp={(event) => event.stopPropagation()}
+                        onInput={(event) => {
+                          event.stopPropagation();
+                          const nextBaseFrequency = coerceSolfeggioFrequency(event.currentTarget.value);
+                          if (nextBaseFrequency === null) {
+                            return;
+                          }
+                          updateEditingPresetDraft((current) => ({
+                            ...current,
+                            settings: { ...current.settings, baseFrequency: nextBaseFrequency }
+                          }));
+                          updateSetting('baseFrequency', nextBaseFrequency);
+                        }}
+                        onChange={(event) => event.stopPropagation()}
+                      />
+                    </label>
+                  </div>
                 )}
               </div>
 

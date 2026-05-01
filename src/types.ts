@@ -78,6 +78,7 @@ export interface Copy {
   noisePapers: string;
   noiseReferences: string;
   beatOn: string;
+  beatLabel: string;
   beatHelp: string;
   beatDesc: string;
   earphoneMode: string;

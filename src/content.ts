@@ -22,6 +22,7 @@ export const copy: Record<Locale, Copy> = {
     noisePapers: 'ノイズの論文リンクを表示',
     noiseReferences: 'ノイズに関する参考論文',
     beatOn: 'ビート ON',
+    beatLabel: 'ビート',
     beatHelp: 'ビートの説明を表示',
     beatDesc: '左右で異なる音（バイノーラル）または等間隔のパルス（アイソクロニック）を流し、集中や休息を助ける機能です。',
     earphoneMode: 'イヤホン（バイノーラル）',
