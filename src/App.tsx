@@ -604,15 +604,21 @@ export function App() {
                 <div className="label-row">
                   <span className="label-text">{strings.volumeLabel}</span>
                   <div className="value-with-stepper">
-                    <button className="step-button" type="button" onClick={() => updateEditingPresetDraft((current) => ({
-                      ...current,
-                      settings: { ...current.settings, volume: Math.max(0, current.settings.volume - 1) }
-                    }))}>-</button>
+                    <button className="step-button" type="button" onClick={(event) => {
+                      event.stopPropagation();
+                      updateEditingPresetDraft((current) => ({
+                        ...current,
+                        settings: { ...current.settings, volume: Math.max(0, current.settings.volume - 1) }
+                      }));
+                    }}>-</button>
                     <span className="value-display">{editingPresetDraft.settings.volume}%</span>
-                    <button className="step-button" type="button" onClick={() => updateEditingPresetDraft((current) => ({
-                      ...current,
-                      settings: { ...current.settings, volume: Math.min(100, current.settings.volume + 1) }
-                    }))}>+</button>
+                    <button className="step-button" type="button" onClick={(event) => {
+                      event.stopPropagation();
+                      updateEditingPresetDraft((current) => ({
+                        ...current,
+                        settings: { ...current.settings, volume: Math.min(100, current.settings.volume + 1) }
+                      }));
+                    }}>+</button>
                   </div>
                 </div>
                 <input
@@ -620,13 +626,16 @@ export function App() {
                   min="0"
                   max="100"
                   value={editingPresetDraft.settings.volume}
-                  onChange={(event) => {
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onMouseUp={(event) => event.stopPropagation()}
+                  onInput={(event) => {
                     event.stopPropagation();
                     updateEditingPresetDraft((current) => ({
                       ...current,
                       settings: { ...current.settings, volume: Number(event.currentTarget.value) }
                     }));
                   }}
+                  onChange={(event) => event.stopPropagation()}
                 />
                 <input
                   className="preset-volume-input"
@@ -706,15 +715,21 @@ export function App() {
                         <div className="label-row">
                           <span className="label-text">{strings.baseFreq}</span>
                           <div className="value-with-stepper">
-                            <button className="step-button" type="button" onClick={() => updateEditingPresetDraft((current) => ({
-                              ...current,
-                              settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, -1) }
-                            }))}>-</button>
+                            <button className="step-button" type="button" onClick={(event) => {
+                              event.stopPropagation();
+                              updateEditingPresetDraft((current) => ({
+                                ...current,
+                                settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, -1) }
+                              }));
+                            }}>-</button>
                             <span className="value-display">{editingPresetDraft.settings.baseFrequency}Hz</span>
-                            <button className="step-button" type="button" onClick={() => updateEditingPresetDraft((current) => ({
-                              ...current,
-                              settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, 1) }
-                            }))}>+</button>
+                            <button className="step-button" type="button" onClick={(event) => {
+                              event.stopPropagation();
+                              updateEditingPresetDraft((current) => ({
+                                ...current,
+                                settings: { ...current.settings, baseFrequency: stepSolfeggioFrequency(current.settings.baseFrequency, 1) }
+                              }));
+                            }}>+</button>
                           </div>
                         </div>
                         <input
@@ -723,7 +738,9 @@ export function App() {
                           max="963"
                           step="1"
                           value={editingPresetDraft.settings.baseFrequency}
-                          onChange={(event) => {
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onMouseUp={(event) => event.stopPropagation()}
+                          onInput={(event) => {
                             event.stopPropagation();
                             const nextBaseFrequency = coerceSolfeggioFrequency(event.currentTarget.value);
                             if (nextBaseFrequency === null) {
@@ -734,6 +751,7 @@ export function App() {
                               settings: { ...current.settings, baseFrequency: nextBaseFrequency }
                             }));
                           }}
+                          onChange={(event) => event.stopPropagation()}
                         />
                       </label>
                     </div>
