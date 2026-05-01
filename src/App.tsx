@@ -234,10 +234,11 @@ export function App() {
     await startPlayback();
   }, [isPlaying, startPlayback, stopPlayback]);
 
-  const applyPreset = useCallback((preset: Preset) => {
+  const applyPreset = useCallback((preset: Preset, volumeOverride?: number) => {
     const presetSettings = (presetDrafts[preset.key] ?? getPresetDefaults(preset, settings, locale)).settings;
     const nextSettings = {
       ...presetSettings,
+      volume: volumeOverride !== undefined ? volumeOverride : presetSettings.volume,
       beatMode: settings.beatMode
     };
     setSettings(nextSettings);
